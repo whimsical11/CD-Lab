@@ -8,75 +8,70 @@ struct Code {
     char op;
 };
 
-void generateTargetCode(struct Code *code, FILE *output) {
+void generateTargetCode(struct Code *code) {
     switch (code->op) {
         case '+':
-            fprintf(output, "    MOV AX, %s\n", code->arg1);
-            fprintf(output, "    ADD AX, %s\n", code->arg2);
-            fprintf(output, "    MOV %s, AX\n", code->result);
+            printf("    MOV AX, %s\n", code->arg1);
+            printf("    ADD AX, %s\n", code->arg2);
+            printf("    MOV %s, AX\n", code->result);
             break;
             
         case '-':
-            fprintf(output, "    MOV AX, %s\n", code->arg1);
-            fprintf(output, "    SUB AX, %s\n", code->arg2);
-            fprintf(output, "    MOV %s, AX\n", code->result);
+            printf("    MOV AX, %s\n", code->arg1);
+            printf("    SUB AX, %s\n", code->arg2);
+            printf("    MOV %s, AX\n", code->result);
             break;
             
         case '*':
-            fprintf(output, "    MOV AX, %s\n", code->arg1);
-            fprintf(output, "    MOV BX, %s\n", code->arg2);
-            fprintf(output, "    MUL BX\n");
-            fprintf(output, "    MOV %s, AX\n", code->result);
+            printf("    MOV AX, %s\n", code->arg1);
+            printf("    MOV BX, %s\n", code->arg2);
+            printf("    MUL BX\n");
+            printf("    MOV %s, AX\n", code->result);
             break;
             
         case '/':
-            fprintf(output, "    MOV AX, %s\n", code->arg1);
-            fprintf(output, "    MOV BX, %s\n", code->arg2);
-            fprintf(output, "    XOR DX, DX\n");
-            fprintf(output, "    DIV BX\n");
-            fprintf(output, "    MOV %s, AX\n", code->result);
+            printf("    MOV AX, %s\n", code->arg1);
+            printf("    MOV BX, %s\n", code->arg2);
+            printf("    XOR DX, DX\n");
+            printf("    DIV BX\n");
+            printf("    MOV %s, AX\n", code->result);
             break;
             
         case '=':
-            fprintf(output, "    MOV %s, %s\n", code->result, code->arg1);
+            printf("    MOV %s, %s\n", code->result, code->arg1);
             break;
     }
 }
 
 int main() {
-    struct Code codes[10];
-    int i = 0;
-    FILE *output = fopen("target_code.asm", "w");
+    struct Code code;
 
-    if (!output) {
-        printf("Error opening file!\n");
-        return 1;
-    }
-
-    printf("Enter the set of intermediate code (terminated by exit):\n");
-
+    printf("Enter TAC instructions in the format (result = arg1 op arg2) or (result = arg1) for assignment, terminated by 'exit':\n");
+    
     while (1) {
-        printf("Enter operation: ");
-        scanf(" %c", &codes[i].op);
-        
-        if (codes[i].op == 'e') // Assuming 'e' means exit
+        char input[50];
+        fgets(input, sizeof(input), stdin);
+
+        // Terminate if input is "exit"
+        if (strncmp(input, "exit", 4) == 0) {
             break;
-
-        printf("Enter result: ");
-        scanf("%s", codes[i].result);
-        printf("Enter arg1: ");
-        scanf("%s", codes[i].arg1);
-
-        if (codes[i].op != '=') {
-            printf("Enter arg2: ");
-            scanf("%s", codes[i].arg2);
         }
 
-        generateTargetCode(&codes[i], output);
-        i++;
+        // Parse the input TAC instruction
+        if (sscanf(input, "%s = %s %c %s", code.result, code.arg1, &code.op, code.arg2) == 4) {
+            // Binary operation
+            generateTargetCode(&code);
+        } else if (sscanf(input, "%s = %s", code.result, code.arg1) == 2) {
+            // Assignment operation
+            code.op = '=';
+            strcpy(code.arg2, "");  // No second argument
+            generateTargetCode(&code);
+        } else {
+            printf("Invalid instruction format. Try again.\n");
+        }
     }
 
-    fclose(output);
-    printf("Target code generated in target_code.asm\n");
+    printf("Assembly code generation complete.\n");
+
     return 0;
 }
